@@ -1,0 +1,213 @@
+{
+  "entities": {
+    "Song": {
+      "title": "Song",
+      "description": "A band repertoire entry holding song metadata, lyrics, transposition, and cached instrument names.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Song title (1-150 characters)."
+        },
+        "artist": {
+          "type": "string",
+          "description": "Original artist or band name (1-150 characters)."
+        },
+        "musicalKey": {
+          "type": "string",
+          "description": "Musical key, e.g. Am, C, F#m (0-20 characters)."
+        },
+        "bpm": {
+          "type": "integer",
+          "description": "Tempo in beats per minute (30-300)."
+        },
+        "lyrics": {
+          "type": "string",
+          "description": "Song lyrics with optional inline chord markers (0-25000 characters)."
+        },
+        "primaryInstrument": {
+          "type": "string",
+          "description": "Primary instrument label for quick display (0-60 characters)."
+        },
+        "bandName": {
+          "type": "string",
+          "description": "Optional band or ensemble label (0-100 characters)."
+        },
+        "transposeSemitones": {
+          "type": "integer",
+          "description": "Transposition offset in semitones (-12 to 12)."
+        },
+        "favorite": {
+          "type": "boolean",
+          "description": "Whether the song is starred in repertoire."
+        },
+        "instruments": {
+          "type": "array",
+          "description": "Bounded list of instrument names with saved parts (max 15)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "artist",
+        "musicalKey",
+        "bpm",
+        "lyrics",
+        "primaryInstrument",
+        "bandName",
+        "transposeSemitones",
+        "favorite",
+        "instruments",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "InstrumentPart": {
+      "title": "InstrumentPart",
+      "description": "Sheet music, staff notation, tablature, and chord progression for a specific instrument on a song.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "songId": {
+          "type": "string",
+          "description": "Parent Song document ID."
+        },
+        "instrument": {
+          "type": "string",
+          "description": "Instrument name, e.g. Gitara, Saksofon, Klawisze (1-60 characters)."
+        },
+        "notationType": {
+          "type": "string",
+          "enum": ["STAFF", "TAB", "CHORDS", "PERCUSSION"],
+          "description": "Display and editor notation mode."
+        },
+        "clef": {
+          "type": "string",
+          "enum": ["TREBLE", "BASS", "TAB", "PERCUSSION"],
+          "description": "Musical clef for staff rendering."
+        },
+        "tuning": {
+          "type": "string",
+          "description": "Instrument tuning or transposition key, e.g. Standard, Bb, Eb (0-60 characters)."
+        },
+        "capo": {
+          "type": "integer",
+          "description": "Capo fret number (0-12)."
+        },
+        "staffNotes": {
+          "type": "string",
+          "description": "Note sequence rendered on the 5-line musical staff Canvas (0-15000 characters)."
+        },
+        "tablature": {
+          "type": "string",
+          "description": "ASCII tablature or rhythmic pattern (0-15000 characters)."
+        },
+        "chordsProgression": {
+          "type": "string",
+          "description": "Chord progression bars (0-5000 characters)."
+        },
+        "performanceNotes": {
+          "type": "string",
+          "description": "Rehearsal cues and arrangement remarks (0-3000 characters)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "songId",
+        "instrument",
+        "notationType",
+        "clef",
+        "tuning",
+        "capo",
+        "staffNotes",
+        "tablature",
+        "chordsProgression",
+        "performanceNotes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Setlist": {
+      "title": "Setlist",
+      "description": "Ordered concert or rehearsal setlist referencing user's songs.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "name": {
+          "type": "string",
+          "description": "Setlist title (1-120 characters)."
+        },
+        "venueOrNotes": {
+          "type": "string",
+          "description": "Venue, date, or rehearsal notes (0-300 characters)."
+        },
+        "songIds": {
+          "type": "array",
+          "description": "Ordered list of Song document IDs (max 100)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "name",
+        "venueOrNotes",
+        "songIds",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/songs/{songId}": {
+      "schema": { "$ref": "#/entities/Song" },
+      "description": "User-scoped band repertoire songs with lyrics and metadata."
+    },
+    "/users/{userId}/songs/{songId}/parts/{partId}": {
+      "schema": { "$ref": "#/entities/InstrumentPart" },
+      "description": "Instrument-specific sheet music, staff notes, tabs, and chords for a song."
+    },
+    "/users/{userId}/setlists/{setlistId}": {
+      "schema": { "$ref": "#/entities/Setlist" },
+      "description": "User-scoped gig and rehearsal setlists."
+    }
+  }
+}

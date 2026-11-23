@@ -1,0 +1,6 @@
+{
+  "name": "Partytura",
+  "description": "Aplikacja dla zespołu muzycznego do tekstów piosenek oraz nut i partii instrumentalnych.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

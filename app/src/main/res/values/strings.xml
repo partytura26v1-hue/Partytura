@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Partytura</string>
+    <string name="tagline">Teksty i nuty dla Twojego zespołu</string>
+    <string name="sign_in_google">Zaloguj się przez Google</string>
+    <string name="sign_out">Wyloguj</string>
+    <string name="nav_lookup">Szukaj</string>
+    <string name="nav_repertoire">Repertuar</string>
+    <string name="nav_setlists">Setlisty</string>
+    <string name="mode_sheet_music">Nuty i instrument</string>
+    <string name="mode_lyrics">Tekst piosenki</string>
+    <string name="label_song_title">Tytuł utworu</string>
+    <string name="label_artist">Wykonawca</string>
+    <string name="label_instrument">Instrument</string>
+    <string name="label_key">Tonacja</string>
+    <string name="label_bpm">Tempo (BPM)</string>
+    <string name="action_search_sheet">Szukaj lub utwórz nuty</string>
+    <string name="action_search_lyrics">Pobierz tekst</string>
+    <string name="action_save">Zapisz</string>
+    <string name="action_cancel">Anuluj</string>
+    <string name="action_delete">Usuń</string>
+    <string name="action_share">Udostępnij zespołowi</string>
+    <string name="cd_back">Wróć</string>
+    <string name="cd_favorite">Ulubiony utwór</string>
+    <string name="cd_stage_banner">Ilustracja studia muzycznego i nut</string>
+    <string name="cd_empty_repertoire">Otwarty zeszyt nutowy z nutami</string>
+    <string name="cd_metronome">Metronom</string>
+</resources>

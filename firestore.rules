@@ -1,0 +1,174 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidSong(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 150 &&
+             data.artist is string && data.artist.size() >= 1 && data.artist.size() <= 150 &&
+             data.musicalKey is string && data.musicalKey.size() <= 20 &&
+             data.bpm is int && data.bpm >= 30 && data.bpm <= 300 &&
+             data.lyrics is string && data.lyrics.size() <= 25000 &&
+             data.primaryInstrument is string && data.primaryInstrument.size() <= 60 &&
+             data.bandName is string && data.bandName.size() <= 100 &&
+             data.transposeSemitones is int && data.transposeSemitones >= -12 && data.transposeSemitones <= 12 &&
+             data.favorite is bool &&
+             data.instruments is list && data.instruments.size() <= 15 &&
+             (data.instruments.size() == 0 || data.instruments[0] is string) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidInstrumentPart(data, userId, songId) {
+      return data.userId is string && data.userId == userId &&
+             data.songId is string && data.songId == songId &&
+             data.instrument is string && data.instrument.size() >= 1 && data.instrument.size() <= 60 &&
+             data.notationType in ['STAFF', 'TAB', 'CHORDS', 'PERCUSSION'] &&
+             data.clef in ['TREBLE', 'BASS', 'TAB', 'PERCUSSION'] &&
+             data.tuning is string && data.tuning.size() <= 60 &&
+             data.capo is int && data.capo >= 0 && data.capo <= 12 &&
+             data.staffNotes is string && data.staffNotes.size() <= 15000 &&
+             data.tablature is string && data.tablature.size() <= 15000 &&
+             data.chordsProgression is string && data.chordsProgression.size() <= 5000 &&
+             data.performanceNotes is string && data.performanceNotes.size() <= 3000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidSetlist(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+             data.venueOrNotes is string && data.venueOrNotes.size() <= 300 &&
+             data.songIds is list && data.songIds.size() <= 100 &&
+             (data.songIds.size() == 0 || data.songIds[0] is string) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/songs/{songId} {
+      allow get: if isOwner(userId) && isValidId(songId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(songId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'artist', 'musicalKey', 'bpm',
+                         'lyrics', 'primaryInstrument', 'bandName',
+                         'transposeSemitones', 'favorite', 'instruments',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'artist', 'musicalKey', 'bpm',
+                         'lyrics', 'primaryInstrument', 'bandName',
+                         'transposeSemitones', 'favorite', 'instruments',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidSong(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(songId) &&
+                       isValidSong(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'artist', 'musicalKey', 'bpm',
+                         'lyrics', 'primaryInstrument', 'bandName',
+                         'transposeSemitones', 'favorite', 'instruments',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(songId);
+
+      match /parts/{partId} {
+        allow get: if isOwner(userId) && isValidId(songId) && isValidId(partId);
+        allow list: if isOwner(userId) && isValidId(songId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(songId) &&
+                         isValidId(partId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'songId', 'instrument', 'notationType',
+                           'clef', 'tuning', 'capo', 'staffNotes',
+                           'tablature', 'chordsProgression', 'performanceNotes',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'songId', 'instrument', 'notationType',
+                           'clef', 'tuning', 'capo', 'staffNotes',
+                           'tablature', 'chordsProgression', 'performanceNotes',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidInstrumentPart(incoming(), userId, songId) &&
+                         existsAfter(/databases/$(database)/documents/users/$(userId)/songs/$(songId));
+
+        allow update: if isOwner(userId) &&
+                         isValidId(songId) &&
+                         isValidId(partId) &&
+                         isValidInstrumentPart(incoming(), userId, songId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().songId == existing().songId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'instrument', 'notationType', 'clef', 'tuning',
+                           'capo', 'staffNotes', 'tablature',
+                           'chordsProgression', 'performanceNotes', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(songId) && isValidId(partId);
+      }
+    }
+
+    match /users/{userId}/setlists/{setlistId} {
+      allow get: if isOwner(userId) && isValidId(setlistId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(setlistId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'name', 'venueOrNotes', 'songIds',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'name', 'venueOrNotes', 'songIds',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidSetlist(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(setlistId) &&
+                       isValidSetlist(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'venueOrNotes', 'songIds', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(setlistId);
+    }
+  }
+}
