@@ -21,8 +21,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          fi
 
       - name: Restore debug keystore for Firebase Sign-In
         run: |
@@ -36,7 +40,9 @@ jobs:
           gradle-version: '9.3.1'
 
       - name: Assemble Debug APK
-        run: gradle :app:assembleDebug --no-daemon
+        run: |
+          gradle --version
+          gradle :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload Partytura APK
         uses: actions/upload-artifact@v4
