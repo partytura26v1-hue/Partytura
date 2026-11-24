@@ -21,9 +21,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Restore google-services.json from GitHub Secret
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ ! -f app/google-services.json ]; then
+            if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+              printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+            else
+              echo "::error::Brak pliku app/google-services.json na GitHubie. Dodaj sekret GOOGLE_SERVICES_JSON w Settings -> Secrets and variables -> Actions."
+              exit 1
+            fi
+          fi
+
       - name: Accept Android SDK licenses
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
           if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
             yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
           fi
@@ -40,9 +52,7 @@ jobs:
           gradle-version: '9.3.1'
 
       - name: Assemble Debug APK
-        run: |
-          gradle --version
-          gradle :app:assembleDebug --no-daemon --stacktrace
+        run: gradle :app:assembleDebug --no-daemon
 
       - name: Upload Partytura APK
         uses: actions/upload-artifact@v4
